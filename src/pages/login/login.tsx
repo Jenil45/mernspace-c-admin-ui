@@ -1,24 +1,48 @@
-import { Alert, Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd";
+import {
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  Flex,
+  Form,
+  Input,
+  Layout,
+  Space,
+} from "antd";
 import { LockFilled, UserOutlined, LockOutlined } from "@ant-design/icons";
 import Logo from "../../components/icons/Logo";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Credentials } from "../../types";
-import { login } from "../../http/api";
+import { login, self } from "../../http/api";
+import { useAuthStore } from "../../store";
 
 const loginUser = async (userData: Credentials) => {
-  const {data} = await login(userData);
+  const { data } = await login(userData);
   return data;
-}
+};
+
+const getSelf = async () => {
+  const { data } = await self();
+  return data;
+};
 
 const LoginPage = () => {
+  const { setUser } = useAuthStore();
 
-  const {mutate, isPending, isError, error} = useMutation({
-    mutationKey: ['login'],
+  const { refetch } = useQuery({
+    queryKey: ["self"],
+    queryFn: getSelf,
+    enabled: false,
+  });
+
+  const { mutate, isPending, isError, error } = useMutation({
+    mutationKey: ["login"],
     mutationFn: loginUser,
     onSuccess: async () => {
-      console.log("Login SUccessfull");
-    }
-  })
+      const selfDataPromise = await refetch();
+      setUser(selfDataPromise.data);
+    },
+  });
 
   return (
     <>
@@ -52,16 +76,20 @@ const LoginPage = () => {
               </Space>
             }
           >
-            <Form initialValues={{ remember: true }} onFinish={(values) => {
-              mutate({email: values.username, password: values.password})
-              console.log(values)
-            }}>
-
-              {
-                isError && (
-                  <Alert style={{marginBottom: 24}} type="error" title={error?.message} />
-                )
-              }
+            <Form
+              initialValues={{ remember: true }}
+              onFinish={(values) => {
+                mutate({ email: values.username, password: values.password });
+                console.log(values);
+              }}
+            >
+              {isError && (
+                <Alert
+                  style={{ marginBottom: 24 }}
+                  type="error"
+                  title={error?.message}
+                />
+              )}
 
               <Form.Item
                 name="username"
@@ -98,7 +126,9 @@ const LoginPage = () => {
                 <Form.Item name="remember" valuePropName="checked">
                   <Checkbox>Remember me</Checkbox>
                 </Form.Item>
-                <a href="" id="login-form-forgot">Forgot password</a>
+                <a href="" id="login-form-forgot">
+                  Forgot password
+                </a>
               </Flex>
 
               <Form.Item>
