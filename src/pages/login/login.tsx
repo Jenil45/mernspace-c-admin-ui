@@ -46,14 +46,22 @@ const LoginPage = () => {
 
       // logout or redirect to client ui
       if(!isAllowed(selfDataPromise.data)) {
-        await logout();
-        logoutFromStore();
+        logoutMutate();
         return;
       } 
 
       setUser(selfDataPromise.data);
     },
   });
+
+  const {mutate: logoutMutate } = useMutation({
+    mutationKey: ["logout"],
+    mutationFn: logout,
+    onSuccess: async () => {
+      logoutFromStore();
+      return;
+    }
+  })
 
   return (
     <>
