@@ -23,45 +23,54 @@ import UserIcon from "../components/icons/UserIcon";
 
 const { Sider, Header, Content, Footer } = Layout;
 
-const items = [
-  {
-    key: "/",
-    icon: <Icon component={Home} />,
-    label: <NavLink to="/">Home</NavLink>,
-  },
-  {
-    key: "/users",
-    icon: <Icon component={UserIcon} />,
-    label: <NavLink to="/users">Users</NavLink>,
-  },
-  {
-    key: "/restaurants",
-    icon: <Icon component={foodIcon} />,
-    label: <NavLink to="/restaurants">Restaurants</NavLink>,
-  },
-  {
-    key: "/products",
-    icon: <Icon component={BasketIcon} />,
-    label: <NavLink to="/products">Products</NavLink>,
-  },
-  {
-    key: "/promos",
-    icon: <Icon component={GiftIcon} />,
-    label: <NavLink to="/promos">Promos</NavLink>,
-  },
-];
+const getMenuItems = (role: string) => {
+  const baseItems = [
+    {
+      key: "/",
+      icon: <Icon component={Home} />,
+      label: <NavLink to="/">Home</NavLink>,
+    },
+    {
+      key: "/products",
+      icon: <Icon component={BasketIcon} />,
+      label: <NavLink to="/products">Products</NavLink>,
+    },
+    {
+      key: "/promos",
+      icon: <Icon component={GiftIcon} />,
+      label: <NavLink to="/promos">Promos</NavLink>,
+    },
+  ];
+
+  if (role === "admin") {
+    const menus = [...baseItems]
+    menus.splice(1,0,      {
+      key: "/users",
+      icon: <Icon component={UserIcon} />,
+      label: <NavLink to="/users">Users</NavLink>,
+    });
+    menus.splice(2,0,      {
+      key: "/restaurants",
+      icon: <Icon component={foodIcon} />,
+      label: <NavLink to="/restaurants">Restaurants</NavLink>,
+    });
+    return menus;
+  }
+
+  return baseItems;
+};
+
 
 const Dashboard = () => {
+  const { logout: logoutFromStore } = useAuthStore();
 
-  const {logout: logoutFromStore} = useAuthStore();
-
-  const {mutate: logoutMutate } = useMutation({
+  const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
     mutationFn: logout,
     onSuccess: async () => {
       logoutFromStore();
       return;
-    }
+    },
   });
 
   const [collapsed, setCollapsed] = useState(false);
@@ -70,14 +79,14 @@ const Dashboard = () => {
     token: { colorBgContainer },
   } = theme.useToken();
 
-
   // protected route logic
   const { user } = useAuthStore();
-
+  
   if (user === null) {
     return <Navigate to={"/auth/login"} replace={true} />;
   }
 
+  const items = getMenuItems(user.role);
 
   return (
     <div>
@@ -107,24 +116,36 @@ const Dashboard = () => {
             }}
           >
             <Flex gap={"middle"} align="start" justify="space-between">
-              <Badge text={ user.role==="admin" ? "You are an admin" : user.tenant?.name} status="success" />
+              <Badge
+                text={
+                  user.role === "admin" ? "You are an admin" : user.tenant?.name
+                }
+                status="success"
+              />
               <Space size={16}>
                 <Badge dot={true}>
                   <BellFilled />
                 </Badge>
-                <Dropdown menu={{ items: [
-                  {
-                    key: "/logout",
-                    label: "Logout",
-                    onClick: () => logoutMutate()
-                  }
-                ] }} placement="bottomRight">
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: "/logout",
+                        label: "Logout",
+                        onClick: () => logoutMutate(),
+                      },
+                    ],
+                  }}
+                  placement="bottomRight"
+                >
                   <Avatar
                     style={{
                       backgroundColor: "#fde3cf",
                       color: "#f56a00",
                     }}
-                  >A</Avatar>
+                  >
+                    A
+                  </Avatar>
                 </Dropdown>
               </Space>
             </Flex>
