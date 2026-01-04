@@ -15,7 +15,8 @@ createRoot(document.getElementById('root')!).render(
       <ConfigProvider theme={{
         token: {
           colorPrimary: '#F65F42',
-          colorLink: '#F65F42'
+          colorLink: '#F65F42',
+          // colorBgContainer: '#F65F42',
         }
       }}>
         <RouterProvider router={router} />
