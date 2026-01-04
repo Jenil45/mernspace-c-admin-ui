@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { User } from "../../types";
 import { getUsers } from "../../http/api";
 import { useAuthStore } from "../../store";
+import UsersFilter from "./UsersFilters";
 
 const columns = [
     {
@@ -68,6 +69,7 @@ const Users = () => {
             <Breadcrumb separator={<RightOutlined />} items={[{ title: <Link to={"/"}>Dashboard</Link> }, {title: 'Users'}]} />
             {isFetching && <div>Loading...</div>}
             {isError && <div>{error.message}</div>}
+            <UsersFilter />
             <Table  columns={columns} dataSource={users} />
         </Space>
     </>
