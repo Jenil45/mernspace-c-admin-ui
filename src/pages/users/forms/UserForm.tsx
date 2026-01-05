@@ -4,16 +4,14 @@ import { getTenants } from "../../../http/api";
 import type { Tenant } from "../../../types";
 
 const UserForm = () => {
-    const {
-        data: tenants
-      } = useQuery({
-        queryKey: ["tenants"],
-        queryFn: async () => {
-          const res = await getTenants();
-          console.log("Fetch data: ", res);
-          return res.data;
-        },
-      });
+  const { data: tenants } = useQuery({
+    queryKey: ["tenants"],
+    queryFn: async () => {
+      const res = await getTenants();
+      console.log("Fetch data: ", res);
+      return res.data;
+    },
+  });
 
   return (
     <Row>
@@ -22,17 +20,45 @@ const UserForm = () => {
           <Card title="Basic Info">
             <Row gutter={20}>
               <Col span={12}>
-                <Form.Item label="First name" name={"firstName"}>
+                <Form.Item
+                  label="First name"
+                  name={"firstName"}
+                  rules={[
+                    {
+                      required: true,
+                      message: "First name is required",
+                    },
+                  ]}
+                >
                   <Input size="large" />
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item label="Last name" name={"lastName"}>
+                <Form.Item
+                  label="Last name"
+                  name={"lastName"}
+                  rules={[
+                    {
+                      required: true,
+                      message: "Last name is required",
+                    },
+                  ]}
+                >
                   <Input size="large" />
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item label="Email" name={"email"}>
+                <Form.Item
+                  label="Email"
+                  name={"email"}
+                  rules={[
+                    {
+                      required: true,
+                      message: "Email is required",
+                    },
+                    { type: "email", message: "Email is not valid" },
+                  ]}
+                >
                   <Input size="large" />
                 </Form.Item>
               </Col>
@@ -42,7 +68,12 @@ const UserForm = () => {
           <Card title="Security Info">
             <Row gutter={20}>
               <Col span={12}>
-                <Form.Item label="Password" name={"password"}>
+                <Form.Item label="Password" name={"password"} rules={[
+                    {
+                        required: true,
+                        message: 'Password is required'
+                    }
+                ]}>
                   <Input size="large" type={"password"} />
                 </Form.Item>
               </Col>
@@ -52,7 +83,12 @@ const UserForm = () => {
           <Card title="Role and Tenant">
             <Row gutter={20}>
               <Col span={12}>
-                <Form.Item label="Role" name={"role"}>
+                <Form.Item label="Role" name={"role"} rules={[
+                    {
+                        required: true,
+                        message: 'Role is required'
+                    }
+                ]}>
                   <Select
                     size="large"
                     style={{ width: "100%" }}
@@ -66,18 +102,23 @@ const UserForm = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item label="Tenant" name={"tenantId"}>
+                <Form.Item label="Tenant" name={"tenantId"} rules={[
+                    {
+                        required: true,
+                        message: 'Restaurant is required'
+                    }
+                ]}>
                   <Select
                     size="large"
                     style={{ width: "100%" }}
                     allowClear={true}
                     placeholder="Select Restaurant"
                   >
-                    {
-                        tenants?.map((tenant: Tenant) => (
-                            <Select.Option value={tenant.id}>{tenant.name}</Select.Option>
-                        ))
-                    }
+                    {tenants?.map((tenant: Tenant) => (
+                      <Select.Option value={tenant.id}>
+                        {tenant.name}
+                      </Select.Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>
