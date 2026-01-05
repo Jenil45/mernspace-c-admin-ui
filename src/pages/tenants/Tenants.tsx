@@ -1,14 +1,12 @@
-import { Breadcrumb, Button, Drawer, Form, Space, Table, theme } from "antd";
-import { RightOutlined } from "@ant-design/icons";
-import { Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import type { User } from "../../types";
-import { getUsers } from "../../http/api";
+import { getTenants } from "../../http/api";
 import { useAuthStore } from "../../store";
-import UsersFilter from "./UsersFilters";
-import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { Breadcrumb, Button, Drawer, Space, Table } from "antd";
+import { RightOutlined } from "@ant-design/icons";
 import { PlusOutlined } from "@ant-design/icons";
-import UserForm from "./forms/UserForm";
+import TenantsFilter from "./TenantsFilter";
+import { useState } from "react";
 
 const columns = [
   {
@@ -18,55 +16,30 @@ const columns = [
   },
   {
     title: "Name",
-    dataIndex: "firstName",
-    key: "firstName",
-    render: (_text: string, record: User) => {
-      return (
-        <div>
-          {record.firstName} {record.lastName}
-        </div>
-      );
-    },
+    dataIndex: "name",
+    key: "name",
   },
   {
-    title: "Email",
-    dataIndex: "email",
-    key: "email",
-  },
-  {
-    title: "Role",
-    dataIndex: "role",
-    key: "role",
-  },
-  {
-    title: "Restaurant",
-    dataIndex: "tenant",
-    key: "tenant",
-    // render: (_text: string, record: User) => {
-    //     return <div>{record.tenant?.name}</div>;
-    // },
+    title: "Address",
+    dataIndex: "address",
+    key: "address",
   },
 ];
 
-const Users = () => {
-
-    const {token: {colorBgLayout}} = theme.useToken();
-
+const Tenants = () => {
+  const { user } = useAuthStore();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { user } = useAuthStore();
-
   const {
-    data: users,
+    data: tenants,
     isFetching,
     isError,
     error,
   } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["tenants"],
     queryFn: async () => {
-      const res = await getUsers();
+      const res = await getTenants();
       console.log("Fetch data: ", res);
-
       return res.data;
     },
   });
@@ -82,12 +55,14 @@ const Users = () => {
           separator={<RightOutlined />}
           items={[
             { title: <Link to={"/"}>Dashboard</Link> },
-            { title: "Users" },
+            { title: "Tenants" },
           ]}
         />
+
         {isFetching && <div>Loading...</div>}
         {isError && <div>{error.message}</div>}
-        <UsersFilter
+
+        <TenantsFilter
           onFilterChange={(filterName: string, filterValue: string) => {
             console.log(filterName);
             console.log(filterValue);
@@ -100,20 +75,19 @@ const Users = () => {
               setDrawerOpen(true);
             }}
           >
-            Add User
+            Add Restaurant
           </Button>
-        </UsersFilter>
-        <Table columns={columns} dataSource={users} rowKey={"id"} />
+        </TenantsFilter>
+
+        <Table dataSource={tenants} rowKey={"id"} columns={columns} />
 
         <Drawer
-          title={"Create User"}
           size={720}
+          title="Create Restaurant"
           destroyOnHidden={true}
-          styles={{body: {background: colorBgLayout}}}
           open={drawerOpen}
           onClose={() => {
             setDrawerOpen(false);
-            console.log("Closing");
           }}
           extra={
             <Space>
@@ -122,13 +96,11 @@ const Users = () => {
             </Space>
           }
         >
-            <Form layout="vertical">
-                <UserForm />
-            </Form>
+          <p>Some content</p>
         </Drawer>
       </Space>
     </>
   );
 };
 
-export default Users;
+export default Tenants;
