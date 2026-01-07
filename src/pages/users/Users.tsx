@@ -22,10 +22,11 @@ import type { CreateUserData, FieldData, User } from "../../types";
 import { createUser, getUsers } from "../../http/api";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilters";
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import UserForm from "./forms/UserForm";
 import { PER_PAGE } from "../../constants";
+import { debounce } from "lodash";
 
 const columns = [
   {
@@ -92,7 +93,9 @@ const Users = () => {
   } = useQuery({
     queryKey: ["users", queryParams],
     queryFn: async () => {
-      const filteredParams = Object.fromEntries(Object.entries(queryParams).filter(item => !!item[1]));
+      const filteredParams = Object.fromEntries(
+        Object.entries(queryParams).filter((item) => !!item[1])
+      );
       const queryString = new URLSearchParams(
         filteredParams as unknown as Record<string, string>
       ).toString();
@@ -121,17 +124,29 @@ const Users = () => {
     setDrawerOpen(false);
   };
 
-  const onFilterChange = (changedFields: FieldData[]) => {
-    const changedFilterFields = changedFields.map((item) => {
-      return {
-        [item.name[0]]: item.value,
-      };
-    }).reduce((acc, item) => ({...acc, ...item}), {});
+  const debounceQUpdate = useMemo(() => {
+    return debounce((value: string | undefined) => {
+      setQueryParams((prev) => ({...prev, q: value}))
+    }, 1000);
+  }, [])
 
-    setQueryParams((prev) => ({
-      ...prev,
-      ...changedFilterFields
-    }))
+  const onFilterChange = (changedFields: FieldData[]) => {
+    const changedFilterFields = changedFields
+      .map((item) => {
+        return {
+          [item.name[0]]: item.value,
+        };
+      })
+      .reduce((acc, item) => ({ ...acc, ...item }), {});
+
+    if ("q" in changedFilterFields) {
+      debounceQUpdate(changedFilterFields.q);
+    } else {
+      setQueryParams((prev) => ({
+        ...prev,
+        ...changedFilterFields,
+      }));
+    }
   };
 
   if (user?.role !== "admin") {
