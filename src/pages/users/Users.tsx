@@ -1,7 +1,7 @@
-import { Breadcrumb, Button, Drawer, Form, Space, Table, theme } from "antd";
-import { RightOutlined } from "@ant-design/icons";
+import { Breadcrumb, Button, Drawer, Flex, Form, Space, Spin, Table, Typography, theme } from "antd";
+import { RightOutlined, LoadingOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CreateUserData, User } from "../../types";
 import { createUser, getUsers } from "../../http/api";
 import { useAuthStore } from "../../store";
@@ -80,6 +80,7 @@ const Users = () => {
 
       return res.data;
     },
+    placeholderData: keepPreviousData
   });
 
   const { mutate: userMutate } = useMutation({
@@ -106,6 +107,7 @@ const Users = () => {
   return (
     <>
       <Space vertical style={{ width: "100%" }} size={"large"}>
+        <Flex justify="space-between">
         <Breadcrumb
           separator={<RightOutlined />}
           items={[
@@ -113,8 +115,9 @@ const Users = () => {
             { title: "Users" },
           ]}
         />
-        {isFetching && <div>Loading...</div>}
-        {isError && <div>{error.message}</div>}
+        {isFetching && <Spin indicator={<LoadingOutlined style={{fontSize: 24}} />} spinning />}
+        {isError && <Typography.Text type="danger">{error.message}</Typography.Text>}
+        </Flex>
         <UsersFilter
           onFilterChange={(filterName: string, filterValue: string) => {
             console.log(filterName);
