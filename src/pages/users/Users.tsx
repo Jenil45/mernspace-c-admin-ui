@@ -1,8 +1,24 @@
-import { Breadcrumb, Button, Drawer, Flex, Form, Space, Spin, Table, Typography, theme } from "antd";
+import {
+  Breadcrumb,
+  Button,
+  Drawer,
+  Flex,
+  Form,
+  Space,
+  Spin,
+  Table,
+  Typography,
+  theme,
+} from "antd";
 import { RightOutlined, LoadingOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateUserData, User } from "../../types";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import type { CreateUserData, FieldData, User } from "../../types";
 import { createUser, getUsers } from "../../http/api";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilters";
@@ -51,6 +67,8 @@ const columns = [
 
 const Users = () => {
   const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
+
   const queryClient = useQueryClient();
 
   const {
@@ -74,13 +92,16 @@ const Users = () => {
   } = useQuery({
     queryKey: ["users", queryParams],
     queryFn: async () => {
-      const queryString = new URLSearchParams(queryParams as unknown as Record<string, string>).toString();
+      const filteredParams = Object.fromEntries(Object.entries(queryParams).filter(item => !!item[1]));
+      const queryString = new URLSearchParams(
+        filteredParams as unknown as Record<string, string>
+      ).toString();
       const res = await getUsers(queryString);
       console.log("Fetch data: ", res);
 
       return res.data;
     },
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
   });
 
   const { mutate: userMutate } = useMutation({
@@ -100,6 +121,19 @@ const Users = () => {
     setDrawerOpen(false);
   };
 
+  const onFilterChange = (changedFields: FieldData[]) => {
+    const changedFilterFields = changedFields.map((item) => {
+      return {
+        [item.name[0]]: item.value,
+      };
+    }).reduce((acc, item) => ({...acc, ...item}), {});
+
+    setQueryParams((prev) => ({
+      ...prev,
+      ...changedFilterFields
+    }))
+  };
+
   if (user?.role !== "admin") {
     return <Navigate to="/" replace={true} />;
   }
@@ -108,32 +142,36 @@ const Users = () => {
     <>
       <Space vertical style={{ width: "100%" }} size={"large"}>
         <Flex justify="space-between">
-        <Breadcrumb
-          separator={<RightOutlined />}
-          items={[
-            { title: <Link to={"/"}>Dashboard</Link> },
-            { title: "Users" },
-          ]}
-        />
-        {isFetching && <Spin indicator={<LoadingOutlined style={{fontSize: 24}} />} spinning />}
-        {isError && <Typography.Text type="danger">{error.message}</Typography.Text>}
+          <Breadcrumb
+            separator={<RightOutlined />}
+            items={[
+              { title: <Link to={"/"}>Dashboard</Link> },
+              { title: "Users" },
+            ]}
+          />
+          {isFetching && (
+            <Spin
+              indicator={<LoadingOutlined style={{ fontSize: 24 }} />}
+              spinning
+            />
+          )}
+          {isError && (
+            <Typography.Text type="danger">{error.message}</Typography.Text>
+          )}
         </Flex>
-        <UsersFilter
-          onFilterChange={(filterName: string, filterValue: string) => {
-            console.log(filterName);
-            console.log(filterValue);
-          }}
-        >
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setDrawerOpen(true);
-            }}
-          >
-            Add User
-          </Button>
-        </UsersFilter>
+        <Form form={filterForm} onFieldsChange={onFilterChange}>
+          <UsersFilter>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setDrawerOpen(true);
+              }}
+            >
+              Add User
+            </Button>
+          </UsersFilter>
+        </Form>
         <Table
           columns={columns}
           dataSource={users?.data}
