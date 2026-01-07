@@ -60,9 +60,9 @@ const columns = [
     title: "Restaurant",
     dataIndex: "tenant",
     key: "tenant",
-    // render: (_text: string, record: User) => {
-    //     return <div>{record.tenant?.name}</div>;
-    // },
+    render: (_text: string, record: User) => {
+        return <div>{record.tenant?.name}</div>;
+    },
   },
 ];
 
