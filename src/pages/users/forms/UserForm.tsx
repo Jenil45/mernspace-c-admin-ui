@@ -3,11 +3,11 @@ import { Card, Col, Form, Input, Row, Select, Space } from "antd";
 import { getTenants } from "../../../http/api";
 import type { Tenant } from "../../../types";
 
-const UserForm = () => {
+const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
   const { data: tenants } = useQuery({
     queryKey: ["tenants"],
     queryFn: async () => {
-      const res = await getTenants();
+      const res = await getTenants(`perPage=100&currentPage=1`);
       console.log("Fetch data: ", res);
       return res.data;
     },
@@ -65,31 +65,42 @@ const UserForm = () => {
             </Row>
           </Card>
 
-          <Card title="Security Info">
-            <Row gutter={20}>
-              <Col span={12}>
-                <Form.Item label="Password" name={"password"} rules={[
-                    {
+          {!isEditMode && (
+            <Card title="Security Info">
+              <Row gutter={20}>
+                <Col span={12}>
+                  <Form.Item
+                    label="Password"
+                    name={"password"}
+                    rules={[
+                      {
                         required: true,
-                        message: 'Password is required'
-                    }
-                ]}>
-                  <Input size="large" type={"password"} />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Card>
+                        message: "Password is required",
+                      },
+                    ]}
+                  >
+                    <Input size="large" type={"password"} />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Card>
+          )}
 
           <Card title="Role and Tenant">
             <Row gutter={20}>
               <Col span={12}>
-                <Form.Item label="Role" name={"role"} rules={[
+                <Form.Item
+                  label="Role"
+                  name={"role"}
+                  rules={[
                     {
-                        required: true,
-                        message: 'Role is required'
-                    }
-                ]}>
+                      required: true,
+                      message: "Role is required",
+                    },
+                  ]}
+                >
                   <Select
+                    id="selectBoxInUserForm"
                     size="large"
                     style={{ width: "100%" }}
                     allowClear={true}
@@ -102,19 +113,23 @@ const UserForm = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item label="Tenant" name={"tenantId"} rules={[
+                <Form.Item
+                  label="Tenant"
+                  name={"tenantId"}
+                  rules={[
                     {
-                        required: true,
-                        message: 'Restaurant is required'
-                    }
-                ]}>
+                      required: true,
+                      message: "Restaurant is required",
+                    },
+                  ]}
+                >
                   <Select
                     size="large"
                     style={{ width: "100%" }}
                     allowClear={true}
                     placeholder="Select Restaurant"
                   >
-                    {tenants?.map((tenant: Tenant) => (
+                    {tenants?.data.map((tenant: Tenant) => (
                       <Select.Option value={tenant.id} key={tenant.id}>
                         {tenant.name}
                       </Select.Option>

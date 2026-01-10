@@ -19,10 +19,10 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import type { CreateUserData, FieldData, User } from "../../types";
-import { createUser, getUsers } from "../../http/api";
+import { createUser, getUsers, updateUser } from "../../http/api";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilters";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import UserForm from "./forms/UserForm";
 import { PER_PAGE } from "../../constants";
@@ -61,7 +61,7 @@ const columns = [
     dataIndex: "tenant",
     key: "tenant",
     render: (_text: string, record: User) => {
-        return <div>{record.tenant?.name}</div>;
+      return <div>{record.tenant?.name}</div>;
     },
   },
 ];
@@ -69,6 +69,8 @@ const columns = [
 const Users = () => {
   const [form] = Form.useForm();
   const [filterForm] = Form.useForm();
+
+  const [currentEditingUser, setCurrentEditingUser] = useState<User | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -82,6 +84,14 @@ const Users = () => {
   });
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if(currentEditingUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDrawerOpen(true);
+      form.setFieldsValue({...currentEditingUser, tenantId: currentEditingUser.tenant?.id})
+    }
+  }, [currentEditingUser, form])
 
   const { user } = useAuthStore();
 
@@ -117,18 +127,36 @@ const Users = () => {
     },
   });
 
+  const { mutate: userUpdateMutate } = useMutation({
+    mutationKey: ["updateser"],
+    mutationFn: async (data: CreateUserData) =>
+      updateUser(data, currentEditingUser!.id).then((res) => res.data),
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      return;
+    },
+  });
+
   const onHandleSubmit = async () => {
+    const isEditMode = !!currentEditingUser;
     await form.validateFields();
-    await userMutate(form.getFieldsValue());
+    if(isEditMode) {
+      console.log("Is updating");
+      await userUpdateMutate(form.getFieldsValue());
+      
+    } else {
+      await userMutate(form.getFieldsValue());
+    }
     form.resetFields();
+    setCurrentEditingUser(null);
     setDrawerOpen(false);
   };
 
   const debounceQUpdate = useMemo(() => {
     return debounce((value: string | undefined) => {
-      setQueryParams((prev) => ({...prev, q: value, currentPage: 1}))
+      setQueryParams((prev) => ({ ...prev, q: value, currentPage: 1 }));
     }, 500);
-  }, [])
+  }, []);
 
   const onFilterChange = (changedFields: FieldData[]) => {
     const changedFilterFields = changedFields
@@ -145,7 +173,7 @@ const Users = () => {
       setQueryParams((prev) => ({
         ...prev,
         ...changedFilterFields,
-        currentPage: 1
+        currentPage: 1,
       }));
     }
   };
@@ -189,7 +217,22 @@ const Users = () => {
           </UsersFilter>
         </Form>
         <Table
-          columns={columns}
+          columns={[
+            ...columns,
+            {
+              title: "Actions",
+              key: "action",
+              render: (_: string, record: User) => {
+                return (
+                  <Space>
+                    <Button type="link" onClick={() => {
+                      setCurrentEditingUser(record);
+                    }}>Edit</Button>
+                  </Space>
+                );
+              },
+            },
+          ]}
           dataSource={users?.data}
           rowKey={"id"}
           pagination={{
@@ -205,19 +248,20 @@ const Users = () => {
               });
             },
             showTotal: (total: number, range: number[]) => {
-              return `Showing ${range[0]}-${range[1]} of ${total} items`
-            } 
+              return `Showing ${range[0]}-${range[1]} of ${total} items`;
+            },
           }}
         />
 
         <Drawer
-          title={"Create User"}
+          title={currentEditingUser ? "Edit User" : "Create User"}
           size={720}
           destroyOnHidden={true}
           styles={{ body: { background: colorBgLayout } }}
           open={drawerOpen}
           onClose={() => {
             setDrawerOpen(false);
+            setCurrentEditingUser(null);
             form.resetFields();
           }}
           extra={
@@ -225,6 +269,7 @@ const Users = () => {
               <Button
                 onClick={() => {
                   form.resetFields();
+                  setCurrentEditingUser(null);
                   setDrawerOpen(false);
                 }}
               >
@@ -237,7 +282,7 @@ const Users = () => {
           }
         >
           <Form layout="vertical" form={form}>
-            <UserForm />
+            <UserForm isEditMode={!!currentEditingUser} />
           </Form>
         </Drawer>
       </Space>
