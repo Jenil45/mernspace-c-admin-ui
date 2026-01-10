@@ -22,7 +22,7 @@ import type { CreateUserData, FieldData, User } from "../../types";
 import { createUser, getUsers, updateUser } from "../../http/api";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilters";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import UserForm from "./forms/UserForm";
 import { PER_PAGE } from "../../constants";
@@ -141,7 +141,6 @@ const Users = () => {
     const isEditMode = !!currentEditingUser;
     await form.validateFields();
     if(isEditMode) {
-      console.log("Is updating");
       await userUpdateMutate(form.getFieldsValue());
       
     } else {
