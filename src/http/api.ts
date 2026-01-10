@@ -15,3 +15,4 @@ export const updateUser = (user: CreateUserData, id: number) => api.patch(`/user
 
 export const getTenants = (queryString: string) => api.get(`/tenants/?${queryString}`);
 export const createTenants = (tenant: CreateTenantData) => api.post("/tenants/", tenant);
+export const updateTenants = (tenant: CreateTenantData, id: number) => api.patch(`/tenants/${id}`, tenant);
